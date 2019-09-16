@@ -116,11 +116,7 @@ extension ViewController {
 
         if let endNode = endNode {
             // Reset
-            startNode?.removeFromParentNode()
-            self.startNode = nil
-            endNode.removeFromParentNode()
-            self.endNode = nil
-            distanceLabel.text = "Distance: ?"
+            removeNodes()
             return
         }
 
@@ -172,4 +168,11 @@ extension ViewController {
         }
     }
     
+    func removeNodes() {
+        startNode?.removeFromParentNode()
+        self.startNode = nil
+        endNode?.removeFromParentNode()
+        self.endNode = nil
+        distanceLabel.text = "Distance: ?"
+    }
 }

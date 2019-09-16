@@ -123,6 +123,7 @@ class ViewController: UIViewController {
         print(measureSwitch.isOn)
         if measureSwitch.isOn {
             virtualObjectInteraction.isMeasureModeOn = true
+            measureHandler.delegate = self
             sceneView.delegate = measureHandler
             sceneView.session.delegate = measureHandler
             objectsViewController?.view.isHidden = true
@@ -132,7 +133,10 @@ class ViewController: UIViewController {
             trackingStateLabel.isHidden = false
             focusSquare.hide()
         } else {
+            measureFocusSquare.hide()
+            self.removeNodes()
             virtualObjectInteraction.isMeasureModeOn = false
+            measureHandler.delegate = nil
             sceneView.delegate = self
             sceneView.session.delegate = self
             objectsViewController?.view.isHidden = false
@@ -145,7 +149,7 @@ class ViewController: UIViewController {
     func setUpMeasureView() {
 //        sceneView.delegate = measureHandler
         // Show statistics such as fps and timing information
-        sceneView.showsStatistics = true
+//        sceneView.showsStatistics = true
 
 //        let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(ViewController.handleTapGesture))
 //        sceneView.addGestureRecognizer(tapGestureRecognizer)
@@ -156,6 +160,8 @@ class ViewController: UIViewController {
         view.addSubview(distanceLabel)
 
         trackingStateLabel.frame = CGRect(x: 5, y: 35, width: 300, height: 25)
+        distanceLabel.isHidden = true
+        trackingStateLabel.isHidden = true
         view.addSubview(trackingStateLabel)
 
 //        setupFocusSquare()
