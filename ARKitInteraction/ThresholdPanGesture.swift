@@ -55,7 +55,7 @@ class ThresholdPanGesture: UIPanGestureRecognizer {
         // Adjust the threshold based on the number of touches being used.
         let threshold = ThresholdPanGesture.threshold(forTouchCount: touches.count)
         
-        if !isThresholdExceeded && translationMagnitude > threshold {
+        if !isThresholdExceeded && translationMagnitude() > threshold {
             isThresholdExceeded = true
             
             // Set the overall translation to zero as the gesture should now begin.

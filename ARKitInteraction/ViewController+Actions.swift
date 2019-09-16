@@ -18,6 +18,10 @@ extension ViewController: UIGestureRecognizerDelegate {
     
     /// Displays the `VirtualObjectSelectionViewController` from the `addObjectButton` or in response to a tap gesture in the `sceneView`.
     @IBAction func showVirtualObjectSelectionViewController() {
+        guard !measureSwitch.isOn else {
+            return
+        }
+        
         // Ensure adding objects is an available action and we are not loading another object (to avoid concurrent modifications of the scene).
         guard !addObjectButton.isHidden && !virtualObjectLoader.isLoading else { return }
         
@@ -64,6 +68,10 @@ extension ViewController: UIPopoverPresentationControllerDelegate {
     }
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        
+//        if let measureVC = segue.destination as? MeasureViewController {
+//            measureVC.sceneView = sceneView
+//        }
         // All menus should be popovers (even on iPhone).
         if let popoverController = segue.destination.popoverPresentationController, let button = sender as? UIButton {
             popoverController.delegate = self

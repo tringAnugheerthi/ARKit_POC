@@ -44,7 +44,7 @@ extension float4x4 {
 }
 
 // MARK: - CGPoint extensions
-
+/*
 extension CGPoint {
     /// Extracts the screen space point from a vector returned by SCNView.projectPoint(_:).
     init(_ vector: SCNVector3) {
@@ -56,3 +56,4 @@ extension CGPoint {
         return sqrt(x * x + y * y)
     }
 }
+*/

@@ -23,6 +23,8 @@ class ViewController: UIViewController {
     
     @IBOutlet weak var upperControlsView: UIView!
 
+    @IBOutlet weak var measureSwitch: UISwitch!
+    
     // MARK: - UI Elements
     
     let coachingOverlay = ARCoachingOverlayView()
@@ -102,6 +104,20 @@ class ViewController: UIViewController {
         session.pause()
     }
 
+    @IBAction func measureSwitchValueChanged(_ sender: Any) {
+        guard let measureSwitch = sender as? UISwitch else {
+            return
+        }
+        print(measureSwitch.isOn)
+        if measureSwitch.isOn {
+            objectsViewController?.view.isHidden = true
+            addObjectButton.isHidden = true
+        } else {
+            objectsViewController?.view.isHidden = false
+            addObjectButton.isHidden = false
+        }
+    }
+    
     // MARK: - Session management
     
     /// Creates a new AR configuration to run on the `session`.
