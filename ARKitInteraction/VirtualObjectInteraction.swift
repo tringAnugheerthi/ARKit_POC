@@ -39,6 +39,8 @@ class VirtualObjectInteraction: NSObject, UIGestureRecognizerDelegate {
         }
     }
     
+    var isMeasureModeOn = false
+    
     /// The tracked screen position used to update the `trackedObject`'s position.
     private var currentTrackingPosition: CGPoint?
     
@@ -68,6 +70,9 @@ class VirtualObjectInteraction: NSObject, UIGestureRecognizerDelegate {
     
     @objc
     func didPan(_ gesture: ThresholdPanGesture) {
+        guard !isMeasureModeOn else {
+            return
+        }
         switch gesture.state {
         case .began:
             // Check for an object at the touch location.
@@ -116,6 +121,10 @@ class VirtualObjectInteraction: NSObject, UIGestureRecognizerDelegate {
      - Tag: didRotate */
     @objc
     func didRotate(_ gesture: UIRotationGestureRecognizer) {
+        guard !isMeasureModeOn else {
+            return
+        }
+        
         guard gesture.state == .changed else { return }
         
         trackedObject?.objectRotation -= Float(gesture.rotation)
@@ -126,6 +135,10 @@ class VirtualObjectInteraction: NSObject, UIGestureRecognizerDelegate {
     /// Handles the interaction when the user taps the screen.
     @objc
     func didTap(_ gesture: UITapGestureRecognizer) {
+        guard !isMeasureModeOn else {
+            return
+        }
+        
         let touchLocation = gesture.location(in: sceneView)
         
         if let tappedObject = sceneView.virtualObject(at: touchLocation) {

@@ -26,6 +26,7 @@ extension ViewController: ARSCNViewDelegate, ARSessionDelegate {
             let planeAnchor = focusSquare.currentPlaneAnchor
             objectsViewController?.updateObjectAvailability(for: planeAnchor)
         }
+        
     }
     
     func renderer(_ renderer: SCNSceneRenderer, didAdd node: SCNNode, for anchor: ARAnchor) {
@@ -50,14 +51,14 @@ extension ViewController: ARSCNViewDelegate, ARSessionDelegate {
     
     /// - Tag: ShowVirtualContent
     func session(_ session: ARSession, cameraDidChangeTrackingState camera: ARCamera) {
-        statusViewController.showTrackingQualityInfo(for: camera.trackingState, autoHide: true)
-        switch camera.trackingState {
-        case .notAvailable, .limited:
-            statusViewController.escalateFeedback(for: camera.trackingState, inSeconds: 3.0)
-        case .normal:
-            statusViewController.cancelScheduledMessage(for: .trackingStateEscalation)
-            showVirtualContent()
-        }
+            statusViewController.showTrackingQualityInfo(for: camera.trackingState, autoHide: true)
+            switch camera.trackingState {
+            case .notAvailable, .limited:
+                statusViewController.escalateFeedback(for: camera.trackingState, inSeconds: 3.0)
+            case .normal:
+                statusViewController.cancelScheduledMessage(for: .trackingStateEscalation)
+                showVirtualContent()
+            }
     }
 
     func showVirtualContent() {

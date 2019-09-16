@@ -25,6 +25,14 @@ class ViewController: UIViewController {
 
     @IBOutlet weak var measureSwitch: UISwitch!
     
+    var distanceLabel = UILabel()
+    var trackingStateLabel = UILabel()
+    
+    var startNode: SCNNode?
+    var endNode: SCNNode?
+    
+    var measureHandler = MeasureHandler()
+    
     // MARK: - UI Elements
     
     let coachingOverlay = ARCoachingOverlayView()
@@ -82,10 +90,14 @@ class ViewController: UIViewController {
             self.restartExperience()
         }
         
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(showVirtualObjectSelectionViewController))
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(ViewController.handleTapGesture))
         // Set the delegate to ensure this gesture is only used when there are no virtual objects in the scene.
         tapGesture.delegate = self
         sceneView.addGestureRecognizer(tapGesture)
+        
+        // setup Measure View
+        
+        setUpMeasureView()
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -110,12 +122,43 @@ class ViewController: UIViewController {
         }
         print(measureSwitch.isOn)
         if measureSwitch.isOn {
+            virtualObjectInteraction.isMeasureModeOn = true
+            sceneView.delegate = measureHandler
+            sceneView.session.delegate = measureHandler
             objectsViewController?.view.isHidden = true
             addObjectButton.isHidden = true
+            setupFocusSquare()
+            distanceLabel.isHidden = false
+            trackingStateLabel.isHidden = false
+            focusSquare.hide()
         } else {
+            virtualObjectInteraction.isMeasureModeOn = false
+            sceneView.delegate = self
+            sceneView.session.delegate = self
             objectsViewController?.view.isHidden = false
             addObjectButton.isHidden = false
+            distanceLabel.isHidden = true
+            trackingStateLabel.isHidden = true
         }
+    }
+    
+    func setUpMeasureView() {
+//        sceneView.delegate = measureHandler
+        // Show statistics such as fps and timing information
+        sceneView.showsStatistics = true
+
+//        let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(ViewController.handleTapGesture))
+//        sceneView.addGestureRecognizer(tapGestureRecognizer)
+
+        distanceLabel.text = "Distance: ?"
+        distanceLabel.textColor = .red
+        distanceLabel.frame = CGRect(x: 5, y: 5, width: 150, height: 25)
+        view.addSubview(distanceLabel)
+
+        trackingStateLabel.frame = CGRect(x: 5, y: 35, width: 300, height: 25)
+        view.addSubview(trackingStateLabel)
+
+//        setupFocusSquare()
     }
     
     // MARK: - Session management
@@ -193,4 +236,131 @@ class ViewController: UIViewController {
         present(alertController, animated: true, completion: nil)
     }
 
+    func distance(startNode: SCNNode, endNode: SCNNode) -> Float {
+        let vector = SCNVector3Make(startNode.position.x - endNode.position.x, startNode.position.y - endNode.position.y, startNode.position.z - endNode.position.z)
+        // Scene units map to meters in ARKit.
+        return sqrtf(vector.x * vector.x + vector.y * vector.y + vector.z * vector.z)
+    }
+
+    var dragOnInfinitePlanesEnabled = false
+
+    // MARK: - Focus Square
+
+    var measureFocusSquare = MeasureFocusSquare()
+
+    func setupFocusSquare() {
+        measureFocusSquare.unhide()
+        measureFocusSquare.removeFromParentNode()
+        sceneView.scene.rootNode.addChildNode(measureFocusSquare)
+    }
+
+}
+
+extension ViewController {
+
+    // Code from Apple PlacingObjects demo: https://developer.apple.com/sample-code/wwdc/2017/PlacingObjects.zip
+
+    func worldPositionFromScreenPosition(_ position: CGPoint,
+                                         objectPos: SCNVector3?,
+                                         infinitePlane: Bool = false) -> (position: SCNVector3?, planeAnchor: ARPlaneAnchor?, hitAPlane: Bool) {
+
+        // -------------------------------------------------------------------------------
+        // 1. Always do a hit test against exisiting plane anchors first.
+        //    (If any such anchors exist & only within their extents.)
+
+        let planeHitTestResults = sceneView.hitTest(position, types: .existingPlaneUsingExtent)
+        if let result = planeHitTestResults.first {
+
+            let planeHitTestPosition = SCNVector3.positionFromTransform(result.worldTransform)
+            let planeAnchor = result.anchor
+
+            // Return immediately - this is the best possible outcome.
+            return (planeHitTestPosition, planeAnchor as? ARPlaneAnchor, true)
+        }
+
+        // -------------------------------------------------------------------------------
+        // 2. Collect more information about the environment by hit testing against
+        //    the feature point cloud, but do not return the result yet.
+
+        var featureHitTestPosition: SCNVector3?
+        var highQualityFeatureHitTestResult = false
+
+        let highQualityfeatureHitTestResults = sceneView.hitTestWithFeatures(position, coneOpeningAngleInDegrees: 18, minDistance: 0.2, maxDistance: 2.0)
+
+        if !highQualityfeatureHitTestResults.isEmpty {
+            let result = highQualityfeatureHitTestResults[0]
+            featureHitTestPosition = result.position
+            highQualityFeatureHitTestResult = true
+        }
+
+        // -------------------------------------------------------------------------------
+        // 3. If desired or necessary (no good feature hit test result): Hit test
+        //    against an infinite, horizontal plane (ignoring the real world).
+
+        if (infinitePlane && dragOnInfinitePlanesEnabled) || !highQualityFeatureHitTestResult {
+
+            let pointOnPlane = objectPos ?? SCNVector3Zero
+
+            let pointOnInfinitePlane = sceneView.hitTestWithInfiniteHorizontalPlane(position, pointOnPlane)
+            if pointOnInfinitePlane != nil {
+                return (pointOnInfinitePlane, nil, true)
+            }
+        }
+
+        // -------------------------------------------------------------------------------
+        // 4. If available, return the result of the hit test against high quality
+        //    features if the hit tests against infinite planes were skipped or no
+        //    infinite plane was hit.
+
+        if highQualityFeatureHitTestResult {
+            return (featureHitTestPosition, nil, false)
+        }
+
+        // -------------------------------------------------------------------------------
+        // 5. As a last resort, perform a second, unfiltered hit test against features.
+        //    If there are no features in the scene, the result returned here will be nil.
+
+        let unfilteredFeatureHitTestResults = sceneView.hitTestWithFeatures(position)
+        if !unfilteredFeatureHitTestResults.isEmpty {
+            let result = unfilteredFeatureHitTestResults[0]
+            return (result.position, nil, false)
+        }
+
+        return (nil, nil, false)
+    }
+
+}
+
+extension ViewController: MeasureHandlerDelegate {
+    
+    func updateFocusSquare() {
+        let (worldPosition, planeAnchor, _) = worldPositionFromScreenPosition(view.center, objectPos: focusSquare.position)
+        if let worldPosition = worldPosition {
+            measureFocusSquare.update(for: worldPosition, planeAnchor: planeAnchor, camera: sceneView.session.currentFrame?.camera)
+        }
+    }
+    
+    func measureSession(_ session: ARSession, cameraDidChangeTrackingState camera: ARCamera) {
+        switch camera.trackingState {
+        case .notAvailable:
+            trackingStateLabel.text = "Tracking not available"
+            trackingStateLabel.textColor = .red
+        case .normal:
+            trackingStateLabel.text = "Tracking normal"
+            trackingStateLabel.textColor = .green
+        case .limited(let reason):
+            switch reason {
+            case .excessiveMotion:
+                trackingStateLabel.text = "Tracking limited: excessive motion"
+            case .insufficientFeatures:
+                trackingStateLabel.text = "Tracking limited: insufficient features"
+            case .initializing:
+                trackingStateLabel.text = "Tracking limited: initializing"
+            default:
+                break
+            }
+            trackingStateLabel.textColor = .yellow
+        }
+    }
+    
 }
