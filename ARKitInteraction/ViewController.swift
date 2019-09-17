@@ -25,7 +25,8 @@ class ViewController: UIViewController {
 
     @IBOutlet weak var measureSwitch: UISwitch!
     
-    var distanceLabel = UILabel()
+    @IBOutlet weak var distanceLabel: UILabel!
+    
     var trackingStateLabel = UILabel()
     
     var startNode: SCNNode?
@@ -131,6 +132,7 @@ class ViewController: UIViewController {
             setupFocusSquare()
             distanceLabel.isHidden = false
             trackingStateLabel.isHidden = false
+            upperControlsView.isHidden = true
             focusSquare.hide()
         } else {
             measureFocusSquare.hide()
@@ -143,6 +145,7 @@ class ViewController: UIViewController {
             addObjectButton.isHidden = false
             distanceLabel.isHidden = true
             trackingStateLabel.isHidden = true
+            upperControlsView.isHidden = false
         }
     }
     
@@ -154,10 +157,10 @@ class ViewController: UIViewController {
 //        let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(ViewController.handleTapGesture))
 //        sceneView.addGestureRecognizer(tapGestureRecognizer)
 
-        distanceLabel.text = "Distance: ?"
-        distanceLabel.textColor = .red
-        distanceLabel.frame = CGRect(x: 5, y: 5, width: 150, height: 25)
-        view.addSubview(distanceLabel)
+//        distanceLabel.text = "Distance: ?"
+//        distanceLabel.textColor = .red
+//        distanceLabel.frame = CGRect(x: 5, y: 5, width: 150, height: 25)
+//        view.addSubview(distanceLabel)
 
         trackingStateLabel.frame = CGRect(x: 5, y: 35, width: 300, height: 25)
         distanceLabel.isHidden = true
