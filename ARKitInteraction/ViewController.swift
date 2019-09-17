@@ -27,6 +27,10 @@ class ViewController: UIViewController {
     
     @IBOutlet weak var distanceLabel: UILabel!
     
+    @IBOutlet weak var objDetectionCV: UIView!
+    
+    @IBOutlet weak var objDetectionSwitch: UISwitch!
+    
     var trackingStateLabel = UILabel()
     
     var startNode: SCNNode?
@@ -72,6 +76,8 @@ class ViewController: UIViewController {
         return sceneView.session
     }
     
+    var objectDetectionVC: ObjectDetectionViewController? = nil
+    
     // MARK: - View Controller Life Cycle
     
     override func viewDidLoad() {
@@ -100,7 +106,7 @@ class ViewController: UIViewController {
         
         setUpMeasureView()
     }
-
+    
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         
@@ -116,7 +122,33 @@ class ViewController: UIViewController {
 
         session.pause()
     }
-
+    
+    // MARK: Object Detection Config
+    
+    func setUpObjDetectionView() {
+        objDetectionCV.isHidden = true
+    }
+    
+    @IBAction func objDetectionValueChanged(_ sender: Any) {
+        if objDetectionSwitch.isOn {
+            sceneView.isHidden = true
+            measureSwitch.isOn = false
+            measureSwitchValueChanged(measureSwitch)
+            session.pause()
+            objectDetectionVC?.resizePreviewLayer()
+            objectDetectionVC?.videoCapture.start()
+            objDetectionCV.isHidden = false
+            
+        } else {
+            objDetectionCV.isHidden = true
+            objectDetectionVC?.videoCapture.stop()
+            resetTracking()
+            sceneView.isHidden = false
+        }
+    }
+    
+    // MARK: Measure View Config
+    
     @IBAction func measureSwitchValueChanged(_ sender: Any) {
         guard let measureSwitch = sender as? UISwitch else {
             return

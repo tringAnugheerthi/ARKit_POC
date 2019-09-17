@@ -65,7 +65,10 @@ extension ViewController: UIPopoverPresentationControllerDelegate {
     }
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        
+        if let objectDetectionVC = segue.destination as? ObjectDetectionViewController {
+            self.objectDetectionVC = objectDetectionVC
+            return
+        }
 //        if let measureVC = segue.destination as? MeasureViewController {
 //            measureVC.sceneView = sceneView
 //        }
