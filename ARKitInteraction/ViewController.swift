@@ -140,6 +140,7 @@ class ViewController: UIViewController {
             objDetectionCV.isHidden = false
             
         } else {
+            restartExperience()
             objDetectionCV.isHidden = true
             objectDetectionVC?.videoCapture.stop()
             resetTracking()
